@@ -10,10 +10,10 @@ a template repository for future github projects
 
 
 
-### Analyzing Storefront Vacancies
-Data analysis and visuals for NYCC 6.9.22 ['Oversight - Combatting Commercial Vacancies'](https://legistar.council.nyc.gov/MeetingDetail.aspx?From=Alert&ID=980028&GUID=239563C5-9CA2-44A7-8E1D-A970A0556192) hearing.
+### Lead in NYC Homes
+Data analysis and visuals for NYCC 04.25.2023 ['Oversight - Lead-Based Paint Hazards'](https://legistar.council.nyc.gov/MeetingDetail.aspx?ID=1088690&GUID=98ED2BD8-8C91-4DD7-B43B-A02670026577&Options=info%7C&Search=) hearing.
 
-An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/vacant-storefronts/): 
+An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/lead-in-nyc-homes/): 
 
 ***  
 
