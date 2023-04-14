@@ -18,9 +18,10 @@ An associated webpage for this analysis can be found [on the council website](ht
 ***  
 
 #### Data Sources 
-- [Storefronts Reported Vacant or Not (Filing Year 2020 - 2021)](https://data.cityofnewyork.us/City-Government/Storefronts-Reported-Vacant-or-Not-Filing-Year-202/92iy-9c3n)
+- [The Department of Housing Preservation and Development (HPD) Housing Litigation Division (HLD) Housing Litigations](https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc)
 
-- 2019 5-Year ACS Survey: *We used R package censusapi to get demographic data
+- [Department of Housing
+Preservation and Development (HPD) Lead Violations](https://data.cityofnewyork.us/Housing-Development/LEAD-VIOLATIONS/up7n-jfw5/data)
 
 #### Methodology 
 
