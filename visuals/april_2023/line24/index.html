@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-  <title>NYCHA Vacancies Dec 2021-Dec 2022</title>
+  <title>HPD Lead Litigation Cases, August 2006 - March 2023</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
   <!--Source of Rounded Chart: https://github.com/jedtrow/Chart.js-Rounded-Bar-Charts-->
   <!--  <script type="text/javascript" charset="utf-8" src="Chart.roundedBarCharts.js"></script>-->
@@ -31,7 +31,7 @@
       data: {
         labels: data.xs,
         datasets: [{
-          label: 'NYCHA Vacancies',
+          label: 'HPD Lead Litigation Cases',
           data: data.ys,
           fill: false,
           lineTension: 0.5,
@@ -59,7 +59,7 @@
         cornerRadius: 20,
         title:{
         display: false,
-        text: 'NYCHA Vacancies'
+        text: 'HPD Lead Litigation Cases'
       },
         scales: {
           yAxes: [{
@@ -77,13 +77,13 @@
             },
             scaleLabel: {
               display: true,
-              labelString: 'NYCHA Vacancies'
+              labelString: 'HPD Lead Litigation Casess'
             }
           }],
           xAxes: [{
             scaleLabel:{
               display: false,
-              labelString: 'Dec 2021 - Dec 2022'
+              labelString: 'August 2006 - March 2023'
             },
             ticks: {
               callback: function(value, index, values) {
@@ -99,7 +99,7 @@
         tooltips: {
           callbacks: {
             label: function(tooltipItem, data) {
-              return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toLocaleString('en-US')+ ' Apts';
+              return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toLocaleString('en-US')+ ' Lead Cases';
             },
           },
         //  backgroundColor: '#434343',
