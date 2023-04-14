@@ -13,7 +13,7 @@ a template repository for future github projects
 ### Lead in NYC Homes
 Data analysis and visuals for NYCC 04.25.2023 ['Oversight - Lead-Based Paint Hazards'](https://legistar.council.nyc.gov/MeetingDetail.aspx?ID=1088690&GUID=98ED2BD8-8C91-4DD7-B43B-A02670026577&Options=info%7C&Search=) hearing.
 
-An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/lead-in-nyc-homes/): 
+An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/lead-in-nyc-homes/) 
 
 ***  
 
