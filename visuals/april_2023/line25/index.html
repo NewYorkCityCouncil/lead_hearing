@@ -31,7 +31,7 @@
       data: {
         labels: data.xs,
         datasets: [{
-          label: 'HPD Lead Litigation Cases',
+          label: 'HPD Lead Violations',
           data: data.ys,
           fill: false,
           lineTension: 0.5,
@@ -59,7 +59,7 @@
         cornerRadius: 20,
         title:{
         display: false,
-        text: 'HPD Lead Litigation Cases'
+        text: 'HPD Lead Violations'
       },
         scales: {
           yAxes: [{
@@ -77,13 +77,13 @@
             },
             scaleLabel: {
               display: true,
-              labelString: 'HPD Lead Litigation Casess'
+              labelString: 'HPD Lead Violations'
             }
           }],
           xAxes: [{
             scaleLabel:{
               display: false,
-              labelString: 'August 2006 - March 2023'
+              labelString: '2018 - March 2023'
             },
             ticks: {
               callback: function(value, index, values) {
@@ -130,14 +130,14 @@ myChart.update();
     const xs = [];
     const ys = [];
 
-    const response = await fetch('visuals/april_2023/line25/lead-paint_vios_over-time-month-year.csv');
+    const response = await fetch('lead-paint_vios_over-time-month-year.csv');
     const data = await response.text();
 
     const table = data.split('\n').slice(1);
     table.forEach(row => {
       const columns = row.split(',');
       const date = columns[0];
-      xs.push(parseFloat(date)); //rmake data from string to number
+      xs.push(date); 
       const evictions = columns[1];
       ys.push(parseFloat(evictions));
       //make data from string to number 
