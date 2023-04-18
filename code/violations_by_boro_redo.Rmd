@@ -1,0 +1,19 @@
+---
+title: "violations_by_boro_redo"
+output: html_document
+date: "2023-04-18"
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+# source("00_load_dependencies.R")
+library(data.table)
+```
+
+
+```{r setup, include=FALSE}
+# load data
+knitr::opts_chunk$set(echo = TRUE)
+hmcv <- fread("https://data.cityofnewyork.us/resource/wvxf-dwi5.csv?$where=inspectiondate>='2018-01-01'&$limit=99999999999")[!currentstatus %in% "VIOLATION DISMISSED"]
+```
+
