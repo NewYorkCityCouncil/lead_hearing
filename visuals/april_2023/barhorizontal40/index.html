@@ -105,7 +105,7 @@
       const columns = row.split(',');
       const sector = columns[0];
       xs.push(sector.replace(/['"]+/g, ''));// remove quotes from name
-      const employmentChange = columns[1];
+      const employmentChange = columns[5];
       ys.push(parseFloat(employmentChange)); //make data from string to number
       console.log(sector, employmentChange);
     });
