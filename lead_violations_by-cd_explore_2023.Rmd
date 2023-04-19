@@ -1,0 +1,82 @@
+---
+title: "Lead Violations"
+author: "Brook Frye"
+date: "4/11/23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+files_utils <- paste("code/utils/", list.files("code/utils/"), sep = "")
+lapply(files_utils, source)
+
+# ---- SETUP ----
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+# source("code/utils/00_load_dependencies.R")
+
+# hmcv <-fread("https://data.cityofnewyork.us/resource/wvxf-dwi5.csv?$where=inspectiondate>='2018-01-01'&$limit=99999999999")[!currentstatus %in% "VIOLATION DISMISSED"]
+# write.csv(hmcv_sub,"lead_data_hmcv_4_11_23.csv")
+```
+
+Housing Maintenance Code Violations - lead based paint hazard
+```{r include=FALSE}
+hmcv_sub <- fread("data/lead_data_hmcv_4_11_23.csv")
+hmcv_sub[, inspectiondate := as.Date(inspectiondate)]
+hmcv_sub[, yearinspect := year(inspectiondate)]
+
+# top bbls - most violations 
+# hmcv_sub[, .N, by = .(bbl)][order(N, decreasing = TRUE)][1:20]
+
+lead_paint<- hmcv_sub[grep("SECTION 27-2056.6", novdescription, ignore.case = TRUE), .(bbl, violationid, inspectiondate, CounDist=councildistrict, yearinspect)]
+
+# number of violations per bbl 
+lead_paint[, .(vios_cd = length(unique(violationid))), by = .(CounDist, yearinspect)]
+# number of violations per day 
+lead_paint_vios_day <- lead_paint[, .(vios_day = .N), by = .(inspectiondate)]
+
+# write.csv(lead_paint_vios_day, "data/lead-paint_vios_over-time.csv")
+
+```
+
+```{r echo=FALSE}
+
+# get number of buildings / CD
+
+pluto_file <- fread("https://data.cityofnewyork.us/resource/64uk-42ks.csv?$limit=99999999") 
+
+pluto_sub <- pluto_file[unitsres > 0, .(
+    bbl = str_sub(as.character(bbl), 1, 10),
+    CounDist = council)]
+
+bbls_cd <- pluto_sub[, .N, by = .(CounDist)]
+lead_paint_sub <- lead_paint[yearinspect >= 2020, ]
+lead_paint_sub[, vios_cd := length(unique(violationid)), by = .(CounDist)]
+
+lead_map <- merge(lead_paint_sub[ ,.(CounDist, vios_cd)], bbls_cd)
+lead_map[, norm_vios_cd := vios_cd/N]
+
+council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
+  st_read() %>%
+  st_transform(st_crs(4326))
+
+pal = colorNumeric(
+  palette = "Blues",
+  domain = lead_map$vios_cd, 
+  na.color = "White", 
+  reverse = FALSE
+)
+
+
+map_lead <- left_join(lead_sub, council_districts) %>% st_as_sf() 
+
+
+l<- leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 11, maxZoom = 16)) %>% 
+  addCouncilStyle(add_dists = TRUE) %>%
+  addPolygons(data= map_lead, weight=1, col=~pal(count), fillOpacity = .7, 
+              popup = paste0("<strong>Number of violations: </strong>", map_lead$vios_cd, "<br>")) %>%
+  addLegend("topleft", pal = pal, values = unique(lead_paint$norm_vios_cd), title = "Lead Paint Violations: 2020-Present", opacity = 1, position = "topleft")
+
+l
+
+```
+
+Data Source: https://data.cityofnewyork.us/Housing-Development/Housing-Maintenance-Code-Violations/wvxf-dwi5
