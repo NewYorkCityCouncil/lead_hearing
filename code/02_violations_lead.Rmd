@@ -1,0 +1,67 @@
+---
+title: "lLead paint violations - worst Council Districts"
+author: "Brook Frye"
+date: "4/21/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+source("code/utils/00_load_dependencies.R")
+source("code/utils/make_cd.R")
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+# lead paint city council worst CDs
+
+The average number of lead paint violations per 1000 bbls across NYC is X
+
+Lead paint violations have remained consistently above average in the following council districts.
+
+BBLs that have repeatedly failed to remediate lead-paint violations are 
+
+```{r}
+hmcv_sub <- fread("data/lead_data_hmcv_4_11_23.csv")
+hmcv_sub[, inspectiondate := as.Date(inspectiondate)]
+hmcv_sub[, yearinspect := year(inspectiondate)]
+
+# check nas
+hmcv_sub[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
+hmcv_sub[streetname %in% "BEACH 88 STREET", councildistrict :=  32]
+hmcv_sub[streetname %in% "GRAND CENTRAL PARKWAY SOUTH", councildistrict :=  24]
+hmcv_sub[streetname %in% "ADAM CLAYTONPOWELL JR BOULEVARD", councildistrict :=  9]
+
+lead_paint <- hmcv_sub[grep("SECTION 27-2056.6", novdescription, ignore.case = TRUE), .(violationid, inspectiondate, CounDist=councildistrict, yearinspect)]
+
+# get pluto info re number of bbls in a cd
+
+pluto_file <- fread("https://data.cityofnewyork.us/resource/64uk-42ks.csv?$limit=99999999") 
+
+pluto_sub <- pluto_file[unitsres > 0, .(
+    bbl = str_sub(as.character(bbl), 1, 10),
+    CounDist = council)]
+
+bbls_cd <- unique(pluto_sub[, .N, by = .(CounDist)])
+lead_paint_sub <- unique(lead_paint[yearinspect >= 2020, ])
+lead_paint_sub[, vios_cd := length(unique(violationid)), by = .(CounDist)]
+
+lead_map <- unique(merge(lead_paint_sub[ ,.(CounDist, vios_cd, yearinspect)], bbls_cd))
+lead_map[, norm_vios_cd := (vios_cd/N)*1000, by = .(yearinspect)]
+
+# number of violations per year by cd
+
+setorder(lead_map, yearinspect, -norm_vios_cd)
+
+split(lead_map, lead_map$CounDist)
+
+
+
+```
+
+
+# lead paint worst bbls 
+```{r}
+
+```
+

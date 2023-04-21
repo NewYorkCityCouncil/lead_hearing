@@ -54,9 +54,10 @@ council_districts <- read_sf("data/City Council Districts/") %>% st_transform('+
 
 lead_sf <- left_join(lead_map, council_districts) %>% st_as_sf() 
 
-pal = colorNumeric(
+pal = colorBin(
   palette = "Blues",
-  domain = lead_map$norm_vios_cd
+  domain = lead_map$norm_vios_cd, 
+  bins = 6
 )
 
 l <-  leaflet(data = lead_sf) %>%
@@ -80,11 +81,11 @@ l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1,
 "font-weight" = "bold"))) %>%
   addLegend("topleft", 
             pal = pal, values = unique(lead_map$norm_vios_cd), 
-            title = "Lead Paint Violations per building: 2020-Present", 
+            title = "Lead Paint Violations <br> per 1000 BBLs: 2020-Present", 
             opacity = 1, 
             position = "topleft")
 
-saveWidget(l, "lead_violations_by-cd_2023.html")
+saveWidget(l, "~/Desktop/lead_hearing//visuals/april_2023/lead_violations_by-cd_2023.html")
 
 
 ```
