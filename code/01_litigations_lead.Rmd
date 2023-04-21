@@ -9,56 +9,12 @@ Maps and charts on lead litigations.
 
 ```{r setup, include=FALSE}
 # ---- SETUP ----
-knitr::opts_chunk$set(echo = TRUE)
-source("../../../code/utils/bin_geocode.R")
-source("../../../code/utils/utils.R")
-source("../../../code/utils/00_load_dependencies.R")
-```
-
-```{r}
-# ---- SETUP ----
-# ---- function to unzip shp
-unzip_sf <- function(zip_url) {
-  temp <- tempfile()
-  temp2 <- tempfile()
-  #download the zip folder from the internet save to 'temp' 
-  download.file(zip_url, temp)
-  #unzip the contents in 'temp' and save unzipped content in 'temp2'
-  unzip(zipfile = temp, exdir = temp2)
-  #if returns "character(0), then .shp may be nested within the folder
-  your_SHP_file <- ifelse(!identical(list.files(temp2, pattern = ".shp$",full.names=TRUE), character(0)), 
-                          list.files(temp2, pattern = ".shp$",full.names=TRUE), 
-                          list.files(list.files(temp2, full.names=TRUE), pattern = ".shp$", full.names = TRUE))
-  unlist(temp)
-  unlist(temp2)
-  return(your_SHP_file)
-}
-```
-
-```{r}
-# ---- SETUP ----
-# ---- unzip cd shp
-council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
-  st_read() %>%
-  st_transform(st_crs(4326))
+setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
+source("code/utils/00_load_dependencies.R")
 ```
 
 Data Source:
 https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc
-
-```{r}
-# ---- SETUP ----
-# ---- get bbls per council district
-library(data.table)
-
-pluto_file <- fread("https://data.cityofnewyork.us/resource/64uk-42ks.csv?$limit=99999999") 
-
-pluto_sub <- pluto_file[unitsres > 0, .(
-    bbl = str_sub(as.character(bbl), 1, 10),
-    borough = borough,
-    council_dist = council)]
-```
-
 
 ```{r}
 # ---- LOAD DATA ----
@@ -72,15 +28,12 @@ litigations <- litigations[litigations$yr>2005,] # not complete data
 # ---- CLEAN DATA ----
 lead_litigations <- unique(litigations[grep("lead", casetype, ignore.case = TRUE), ])
 lead_litigations <- unique(lead_litigations[!grep("non-lead", casetype, ignore.case = TRUE), ])
-# lead_litigations[, caseopendate := as.Date(caseopendate)] # added above instead
-# lead_litigations[, yr := year(caseopendate)]
 lead_litigations[, lit_bbl := length(unique(litigationid)), by = .(bbl)]
 ```
 
 ```{r}
 # ---- BASIC GGPLOTS ----
 # ---- cleanup/setup for prp/pct plots
-# litigations <- litigations[, yr := year(caseopendate)] # should've added this in prev section oops
 temp <- lead_litigations %>% group_by(yr) %>% summarise(count_lead=n())
 temp2 <- litigations %>% group_by(yr) %>% summarise(count_total=n())
 temp <- temp2 %>% full_join(y = temp, by = 'yr')
@@ -88,70 +41,18 @@ temp <- temp[temp$yr <= 2023 & !is.na(temp$yr) & !is.na(temp$count_lead), ] # no
 
 # ---- plot number of lead litigations by year
 lead_plot <- ggplot(data=(lead_litigations %>% group_by(yr) %>% summarise(count=n())), aes(x=yr, y=count)) + geom_line() + labs(title="Lead Litigation Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Number of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_plot, filename = "../../../visuals/lead_hearing_4_25_23/lead_litigations.png", width = 8, height = 5)
+ggsave(lead_plot, filename = "visuals/april_2023/lead_litigations.png", width = 8, height = 5)
 
 # ---- plot number of lead litigations by year, by casetype
 lead_casetype_plot <- ggplot(data=(lead_litigations %>% group_by(yr, casetype) %>% summarise(count=n())), aes(x=yr, y=count, col=casetype)) + geom_line() + labs(title="Lead Litigation Cases by Casetype (August 2006-Present)",subtitle="Data Provided by HPD", x="Year Case Opened", y="Number of Cases", color="Case Type") + theme_nycc() + scale_color_nycc()
-ggsave(lead_casetype_plot, filename = "../../../visuals/lead_hearing_4_25_23/lead_litigations_by_casetype.png", width = 8, height = 5)
+ggsave(lead_casetype_plot, filename = "visuals/april_2023/lead_litigations_by_casetype.png", width = 8, height = 5)
 
 # ---- plot prop lead litigations/total litigations by year
 lead_prp <- ggplot(data=temp, aes(x=yr, y=count_lead/count_total)) + geom_line() + labs(title="Lead Litigations: Proportion of Total Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Proportion of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_prp, filename = "../../../visuals/lead_hearing_4_25_23/lead_litigations_prp_total.png", width = 8, height = 5)
+ggsave(lead_prp, filename = "visuals/april_2023/lead_litigations_prp_total.png", width = 8, height = 5)
 # ---- format above plot as pct
 lead_pct <- ggplot(data=temp, aes(x=yr, y=count_lead/count_total)) + scale_y_continuous(labels=scales::percent) + geom_line() + labs(title="Lead Litigations: Percent of Total Cases (August 2006-Present)",subtitle="Data Provided by HPD", x="Year Case Opened", y="Percent of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_pct, filename = "../../../visuals/lead_hearing_4_25_23/lead_litigations_pct_total.png", width = 8, height = 5)
-
-# lead_num_vs_pct <- grid.arrange(lead_plot, lead_pct, nrow = 1)
-# ggsave(lead_num_vs_pct, filename = "../../../visuals/litigations_num_vs_pct.png", width = 14, height = 5) # pretty similar
-```
-
-```{r}
-# ---- MAP 1 ----
-# ---- merge lead data w/ council district shp
-council_districts <- council_districts %>%
-  rename("council_district" = "CounDist")
-lead_lit_cd <- lead_litigations %>% full_join(y = council_districts, by = 'council_district') %>%
-                st_as_sf() 
-lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,] # removing this one because there's no obs. in cd 51...
-```
-
-```{r}
-# ---- MAP 1 ----
-# ---- group sums, set up color palette
-lead_lit_cd_sums <- lead_lit_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
-
-pal = colorNumeric(
-  palette = "Blues",
-  domain = lead_lit_cd_sums$count, 
-  na.color = "White", 
-  reverse = FALSE
-)
-```
-
-Next map: merge w/ pluto, normalize by number of buildings (litigations/number of buildings)
-merge pluto w/ CD
-
-```{r}
-# ---- MAP 1 ----
-# ---- all lead litigations on opendata, compiled since august 2006
-all_leadlit <- leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 11, maxZoom = 16)) %>% 
-  addCouncilStyle(add_dists = TRUE) %>%
-  addPolygons(data=lead_lit_cd_sums, weight=1, col=~pal(count), fillOpacity = .7, 
-              popup = paste0("<strong>Number of litigations: </strong>", lead_lit_cd_sums$count, "<br>")) %>%
-  addLegend("topleft", pal = pal, values = unique(lead_lit_cd_sums$count), title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft")
-# all_leadlit
-```
-
-```{r}
-# ---- MAP 1 ----
-# ---- save map 1: html
-saveWidget(all_leadlit, file=file.path('../../../visuals/lead_hearing_4_25_23', 
-                               "lead_litigations_by_cd.html"))
-
-# ---- save map 1: png
-mapview::mapshot(all_leadlit, 
-        file = file.path('../../../visuals/lead_hearing_4_25_23', "lead_litigations_by_cd.png"),
-        remove_controls = c("homeButton", "layersControl"), vwidth = 1000, vheight = 850)
+ggsave(lead_pct, filename = "visuals/april_2023/lead_litigations_pct_total2.png", width = 8, height = 5)
 ```
 
 xxx
@@ -185,112 +86,15 @@ temp <- filter(litigations,
                               # for lead litigations but not super common regardless
 ```
 
-```{r}
-# ---- MAP 2 ----
-# ---- circle map format and palette
-circle_map <- distinct(lead_litigations) %>%
-  mutate(addr = paste(housenumber, streetname))
-
-pal2 = colorNumeric(
-  palette = "Blues",
-  domain = circle_map$lit_bbl,
-  reverse = FALSE
-)
-```
- 
-```{r}
-# ---- MAP 2 ----
-# ---- all lead litigations on opendata, compiled since august 2006
-all_leadlit_circlevers <- leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 11, maxZoom = 16)) %>% 
-  addPolygons(data=council_districts, weight=1, col='#d3d3d3', fillOpacity = 0.2) %>%
-  addCouncilStyle(add_dists = TRUE) %>%
-  addCircles(data=circle_map,
-                 lng=~longitude, lat=~latitude,
-                 color = ~pal2(lit_bbl), 
-                 popup = paste0("<strong>Number of litigations: </strong>", circle_map$lit_bbl, "<br>",
-                                "<strong>Address: </strong>", circle_map$addr, "<br>",
-                                "<strong>Respondent: </strong>", circle_map$respondent, "<br>"),
-                 group = df,
-                 label =  ~paste("Lead Litigations since August 2006:", circle_map$lit_bbl),
-                 weight = 2,
-                 radius = 1, 
-                 stroke = 2, 
-                 opacity = .5, 
-                 labelOptions = labelOptions(noHide = F,
-                 direction = 'auto')) %>% 
-   addLegend("topleft", pal = pal2, values = unique(circle_map$lit_bbl), title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft", bins=4)
-# all_leadlit_circlevers
-```
-
-```{r}
-# ---- MAP 2 ----
-# ---- save map 2: html
-saveWidget(all_leadlit_circlevers, file=file.path('../../../visuals/lead_hearing_4_25_23', 
-                               "lead_litigations_by_bbl.html"))
-
-# ---- save map 2: png
-mapview::mapshot(all_leadlit_circlevers, 
-        file = file.path('../../../visuals/lead_hearing_4_25_23', "lead_litigations_by_bbl.png"),
-        remove_controls = c("homeButton", "layersControl"), vwidth = 1000, vheight = 850)
-```
-
-```{r}
-# ---- MAP 1.5 ----
-# ---- merge pluto data with council district shp
-pluto_sub <- pluto_sub %>% rename("council_district" = "council_dist")
-pluto_sub_cd <- pluto_sub %>% full_join(y = council_districts, by = 'council_district') %>% st_as_sf() 
-
-# ----  get prop of lead litigations per thousand buildings
-pluto_sub_cd_sums <- pluto_sub_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
-lit_prop <- left_join(lead_lit_cd_sums, pluto_sub_cd_sums %>% as.data.frame() %>% select(-geometry), by = "council_district")
-lit_prop$lit_per_thous_bldngs <- (lit_prop$`count.x`/lit_prop$`count.y`)*1000
-lit_prop <- lit_prop %>% select('geometry','council_district', lit_per_thous_bldngs)
-```
-
-```{r}
-# ---- MAP 1.5 ----
-# ---- set up color palette
-pal = colorNumeric(
-  palette = "Blues",
-  domain = lit_prop$lit_per_thous_bldngs, 
-  na.color = "White", 
-  reverse = FALSE
-)
-```
-
-```{r}
-# ---- MAP 1.5 ----
-lit_per_thou <- leaflet(options = leafletOptions(zoomControl = FALSE, minZoom = 11, maxZoom = 16)) %>% 
-  addCouncilStyle(add_dists = TRUE) %>%
-  addPolygons(data=lit_prop, weight=1, col=~pal(lit_per_thous_bldngs), fillOpacity = .7,
-              popup = paste0("<strong>Number of litigations per thousand buildings: </strong>", round(lit_prop$lit_per_thous_bldngs,2), "<br>")) %>%
-  addLegend("topleft", pal=pal, values=unique(lit_prop$lit_per_thous_bldngs), title="Lead Litigations (per Thousand Buildings): 2006-Present", opacity = 1, position = "topleft")
-```
-
-```{r}
-# ---- MAP 1.5 ----
-# ---- save map 1.5: html
-saveWidget(lit_per_thou, file=file.path('../../../visuals/lead_hearing_4_25_23', 
-                               "lead_litigations_per_thsnd_bbl_by_cd.html"))
-
-# ---- save map 1.5: png
-mapview::mapshot(lit_per_thou, 
-        file = file.path('../../../visuals/lead_hearing_4_25_23',
-                         "lead_litigations_per_thsnd_bbl_by_cd.png"),
-        remove_controls = c("homeButton", "layersControl"), vwidth = 1000, vheight = 850)
-```
-
+Find lead litigations per thousand buildings by borough...
 
 ```{r}
 buildings_in_boro <- pluto_sub %>% group_by(borough) %>% summarise(total_buildings=n())
-```
-
-```{r}
 lead_lit_boro <- lead_litigations %>% group_by(boroid) %>% summarise(num_lit=n())
 ```
 
 ```{r}
-# df %>% mutate(result=recode(result, 'Win'='1', .default=NA_character_))
+buildings_in_boro$boroid <- buildings_in_boro$borough
 buildings_in_boro <- buildings_in_boro %>% mutate(boroid=recode(boroid, "MN" = 1,
                                            "BX" = 2,
                                            "BK" = 3,
@@ -298,22 +102,19 @@ buildings_in_boro <- buildings_in_boro %>% mutate(boroid=recode(boroid, "MN" = 1
                                            "SI" = 5))
 ```
 
-
 ```{r}
 boro_redo <- buildings_in_boro %>% full_join(y = lead_lit_boro, by = 'boroid')
-```
-
-```{r}
 boro_redo$lit_per_thousand_buildings <- boro_redo$num_lit/(boro_redo$total_buildings/1000)
 ```
 
 ```{r}
-boro_redo
-write.csv(boro_redo, "../../../data/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
+# ---- write out csv of boro data
+write.csv(boro_redo, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
 ```
+
 ```{r}
-temp <- ggplot(data=boro_redo, aes(x=borough, y=lit_per_thousand_buildings)) +
-  geom_bar(stat="identity")
-ggsave(temp, filename = "../../../visuals/lead_hearing_4_25_23/litgtns_per_thousand_bldngs_by_boro.png", width = 8, height = 5)
+# ---- plot boro data
+temp <- ggplot(data=boro_redo, aes(x=borough, y=lit_per_thousand_buildings)) + geom_bar(stat="identity") + theme_nycc() + scale_color_nycc()
+ggsave(temp, filename = "visuals/april_2023/litgtns_per_thousand_bldngs_by_boro.png", width = 8, height = 5)
 ```
 
