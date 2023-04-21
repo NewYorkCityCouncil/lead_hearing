@@ -97,7 +97,7 @@
     const xs = [];
     const ys = [];
 
-    const response = await fetch('https://newyorkcitycouncil.github.io/lead_hearing/data/itgtns_per_thousand_bldngs_by_boro.csv.csv');
+    const response = await fetch('https://newyorkcitycouncil.github.io/lead_hearing/data/output/litgtns_per_thousand_bldngs_by_boro.csv');
     const data = await response.text();
 
     const table = data.split('\n').slice(1);
