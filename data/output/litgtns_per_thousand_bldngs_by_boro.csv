@@ -1,6 +1,6 @@
-"borough","total_buildings","boroid","num_lit","lit_per_thousand_buildings"
-"BK",248895,3,1309,5.25924586673095
-"BX",75522,2,2081,27.5548846693679
-"MN",32459,1,956,29.4525401275455
-"QN",296956,4,254,0.855345573081534
-"SI",111543,5,15,0.134477286786262
+"boro","units","bldngs","count","per_thousand_bldngs","per_thousand_units"
+"BROOKLYN","added back in just for formatting",248895,1309,5.25924586673095,"added added back in just for formatting"
+"BRONX","added back in just for formatting",75522,2081,27.5548846693679,"added added back in just for formatting"
+"MANHATTAN","added back in just for formatting",32459,956,29.4525401275455,"added added back in just for formatting"
+"QUEENS","added back in just for formatting",296956,254,0.855345573081534,"added added back in just for formatting"
+"STATEN ISLAND","added back in just for formatting",111543,15,0.134477286786262,"added added back in just for formatting"
