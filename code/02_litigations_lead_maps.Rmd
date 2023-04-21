@@ -21,7 +21,7 @@ lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,] # removing this 
 # ---- group sums, set up color palette
 lead_lit_cd_sums <- lead_lit_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
 
-pal = colorNumeric(
+pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
   domain = lead_lit_cd_sums$count, 
   na.color = "White", 
@@ -55,7 +55,7 @@ mapshot(all_leadlit, file = "visuals/april_2023/lead_litigations_by_cd.png")
 circle_map <- distinct(lead_litigations) %>%
   mutate(addr = paste(housenumber, streetname))
 
-pal2 = colorNumeric(
+pal2 = colorBin(
   palette = rev(nycc_pal("cool")(100)),
   domain = circle_map$lit_bbl,
   reverse = FALSE
@@ -82,7 +82,7 @@ all_leadlit_circlevers <- leaflet() %>%
                  opacity = .5, 
                  labelOptions = labelOptions(noHide = F,
                  direction = 'auto')) %>% 
-   addLegend("topleft", pal = pal2, values = unique(circle_map$lit_bbl), title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft", bins=4)
+   addLegend("topleft", pal = pal2, values = unique(circle_map$lit_bbl), title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft")
 ```
 
 ```{r}
@@ -109,7 +109,7 @@ lit_prop <- lit_prop %>% select('geometry','council_district', lit_per_thous_bld
 ```{r}
 # ---- MAP 1.5 ----
 # ---- set up color palette
-pal = colorNumeric(
+pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
   domain = lit_prop$lit_per_thous_bldngs, 
   na.color = "White", 
