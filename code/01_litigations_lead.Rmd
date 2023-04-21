@@ -120,9 +120,18 @@ boro_redo$per_thousand_units <- "added added back in just for formatting"
 ```{r}
 # new format: boro / units / buildings/ count / per thousand / per thousand units
 boro_redo_formatted <- boro_redo[,c(1, 6, 2, 4, 5, 7)]
+boro_redo_formatted <- boro_redo_formatted %>% 
+    rename("boro" = "borough",
+           "bldngs" = "total_buildings",
+           "count" = "num_lit",
+           "per_thousand_bldngs" = "lit_per_thousand_buildings") %>%
+  mutate(boro=recode(boro, "MN" = "MANHATTAN", 
+                     "BX" = "BRONX",
+                     "BK" = "BROOKLYN",
+                     "QN" = "QUEENS",
+                     "SI" = "STATEN ISLAND"))
 write.csv(boro_redo_formatted, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
 ```
-
 ```{r}
 # ---- plot boro data
 temp <- ggplot(data=boro_redo, aes(x=borough, y=lit_per_thousand_buildings)) + geom_bar(stat="identity") + theme_nycc() + scale_color_nycc()
