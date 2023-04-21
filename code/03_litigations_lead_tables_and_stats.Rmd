@@ -1,0 +1,50 @@
+---
+title: "02_litigations_lead_tables_and_stats"
+output: html_document
+date: "2023-04-13"
+---
+
+Run 01_litigations_lead.Rmd first to get data used in calculations below. 
+
+```{r}
+# ---- MAP 1 TABLE -----
+
+# ---- get table of litigations by cd
+lit_tbl <- arrange(as.data.frame(lead_lit_cd_sums) %>% select('council_district', 'count'), council_district)
+# sum(lit_tbl$count) - just checking
+
+# ---- write out as .csv
+write.csv(lit_tbl, "data/output/litigations_by_cd.csv", row.names=FALSE)
+```
+
+```{r}
+# ---- MAP 1.5 TABLE ----
+
+# ---- get table of litigations per thousand buildings by cd
+lit_per_thousand_tbl <- arrange(as.data.frame(lit_prop) %>% select('council_district', 'lit_per_thous_bldngs'), council_district)
+lit_per_thousand_tbl$rounded <- round(lit_per_thousand_tbl$lit_per_thous_bldngs,2)
+
+# ---- write out as .csv
+write.csv(lit_per_thousand_tbl, "data/output/litigations_per_thousnd_bldngs_by_cd.csv", row.names=FALSE)
+```
+
+```{r}
+# ---- LITIGATIONS OVER TIME TABLE ----
+
+# ---- get table of litigations over time
+lit_over_time <- lead_litigations %>% group_by(yr) %>% summarise(count=n())
+# ---- write out as .csv
+write.csv(lit_over_time, "data/output/litigations_over_time.csv", row.names=FALSE)
+```
+
+```{r}
+# ---- STAT: LEAD CASES IN NYC COURTS ----
+
+# ---- get unique building owners
+length(unique(lead_litigations$respondent))
+
+# ---- get pct in bronx
+round(nrow(lead_litigations[lead_litigations$boroid == 2,])/nrow(lead_litigations),2)
+```
+
+
