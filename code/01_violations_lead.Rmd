@@ -46,19 +46,18 @@ lead_paint_sub <- unique(lead_paint[yearinspect >= 2020, ])
 lead_paint_sub[, vios_cd := length(unique(violationid)), by = .(CounDist)]
 
 lead_map <- unique(merge(lead_paint_sub[ ,.(CounDist, vios_cd)], bbls_cd))
-lead_map[, norm_vios_cd := vios_cd/N]
+lead_map[, norm_vios_cd := (vios_cd/N)*1000]
 setnames(lead_map, "CounDist", "coun_dist")
 
 council_districts <- read_sf("data/City Council Districts/") %>% st_transform('+proj=longlat +datum=WGS84' )
 
 
+lead_sf <- left_join(lead_map, council_districts) %>% st_as_sf() 
 
 pal = colorNumeric(
   palette = "Blues",
   domain = lead_map$norm_vios_cd
 )
-
-lead_sf <- left_join(lead_map, council_districts) %>% st_as_sf() 
 
 l <-  leaflet(data = lead_sf) %>%
   addCouncilStyle() %>%
@@ -81,7 +80,7 @@ l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1,
 "font-weight" = "bold"))) %>%
   addLegend("topleft", 
             pal = pal, values = unique(lead_map$norm_vios_cd), 
-            title = "Lead Paint Violations: 2020-Present", 
+            title = "Lead Paint Violations per building: 2020-Present", 
             opacity = 1, 
             position = "topleft")
 

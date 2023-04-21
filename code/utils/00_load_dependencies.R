@@ -26,7 +26,3 @@ lapply(list.of.packages, require, character.only = TRUE)
 # remove created variables for packages
 rm(list.of.packages,new.packages)
 
-## Load source files -----------------------------------------------
-source("code/utils/bin_geocode.R")
-source("code/utils/utils.R")
-source("code/utils/funs.R")
