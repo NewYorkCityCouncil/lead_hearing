@@ -7,10 +7,9 @@ An associated webpage for this analysis can be found [on the council website](ht
 ***  
 
 #### Data Sources 
-- [The Department of Housing Preservation and Development (HPD) Housing Litigation Division (HLD) Housing Litigations](https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc)
+- HPD Housing Litigations [Dataset](https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc)
 
-- [Department of Housing
-Preservation and Development (HPD) Lead Violations](https://data.cityofnewyork.us/Housing-Development/LEAD-VIOLATIONS/up7n-jfw5/data)
+- HPD Lead Violations [Dataset](https://data.cityofnewyork.us/Housing-Development/LEAD-VIOLATIONS/up7n-jfw5/data)
 
 #### Methodology 
 
