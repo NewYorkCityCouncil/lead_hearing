@@ -1,0 +1,85 @@
+---
+title: "Lead Violations"
+author: "Brook Frye"
+date: "4/11/23"
+output: html_document
+---
+
+```{r echo=FALSE, warning=FALSE}
+source("code/utils/bin_geocode.R")
+source("code/utils/utils.R")
+source("code/utils/00_load_dependencies.R")
+
+# housing code maintenance violations 
+# load/clean the data 
+# hmcv <-fread("https://data.cityofnewyork.us/resource/wvxf-dwi5.csv?$where=inspectiondate>='2018-01-01'&$limit=99999999999")[!currentstatus %in% "VIOLATION DISMISSED"]
+
+# check
+# unique(hmcv[grep("lead", novdescription, ignore.case = TRUE), ])
+# write.csv(hmcv_sub,"lead_data_hmcv_4_11_23.csv")
+
+hmcv_sub <- fread("data/lead_data_hmcv_4_11_23.csv")
+
+hmcv_sub[, inspectiondate := as.Date(inspectiondate)]
+hmcv_sub[, yr := year(inspectiondate)]
+
+map_lead <- unique(hmcv_sub[yr >= "2020", .(bbl, inspectiondate, violationid, housenumber, streetname, latitude, longitude)])
+
+map_lead[, vios_bbl := length(unique(violationid)), by = .(bbl)]
+```
+
+
+```{r echo=FALSE}
+
+map_lead <- distinct(map_lead) %>%
+  mutate(addr = paste(housenumber, streetname), 
+         popup = map2_chr(vios_bbl, addr, ~caption_template(header_template(.x, .y), NULL)))
+
+
+
+pal = colorNumeric(
+  palette = "Blues",
+  domain = map_lead$vios_bbl, 
+  na.color = "White", 
+  reverse = FALSE
+)
+
+
+l <- leaflet() %>%
+  # addProviderTiles("CartoDB.Positron") %>%
+  addCouncilStyle()
+
+
+
+l <-  l %>%       
+  addCircles(data=map_lead,
+                 lng=~longitude, lat=~latitude,
+                 color = ~pal(vios_bbl), 
+                 popup = ~popup,
+                 group = df,
+                 label =  ~paste("Lead Violations since 2020:", map_lead$vios_bbl), 
+                 weight = 2,
+                 radius = 1, 
+                 stroke = 2, 
+                 opacity = .5, 
+                 labelOptions = labelOptions(noHide = F,
+                 direction = 'auto')) %>% 
+   addLegend("topleft", pal = pal, 
+                      values = unique(map_lead$vios_bbl), title = "Lead HMCV, 2020-Present", opacity = 1, 
+    position = "topleft")
+
+
+
+l <- l %>% setView(-73.88099670410158,40.72540497175607,  zoom = 12.5)
+
+
+
+saveWidget(l, "lead_hmcv.html")
+
+```
+
+
+
+
+These are hmcv_sub housing maintenance code violations that are for managers to fix peeling paint that has tested positive for lead. These cases are 
+Data Source: https://data.cityofnewyork.us/Housing-Development/Housing-Maintenance-Code-Violations/wvxf-dwi5

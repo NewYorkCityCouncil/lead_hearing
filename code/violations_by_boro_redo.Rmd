@@ -109,6 +109,7 @@ by_boro_normalized <- units_by_boro %>% full_join(y = by_boro_normalized, by = '
 
 ```{r}
 by_boro_normalized$per_thousand_units <- (by_boro_normalized$count/(by_boro_normalized$units))*1000
-write.csv(by_boro_normalized$per_thousand_units, "../data/lead-paint_vios_by_boro.csv", row.names=FALSE)
+write.csv(by_boro_normalized, "../data/lead-paint_vios_by_boro.csv", row.names=FALSE)
 ```
+
 
