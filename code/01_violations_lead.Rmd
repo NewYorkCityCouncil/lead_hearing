@@ -81,7 +81,7 @@ l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1,
 "font-weight" = "bold"))) %>%
   addLegend("topleft", 
             pal = pal, values = unique(lead_map$norm_vios_cd), 
-            title = "Lead Paint Violations <br> per 1000 BBLs: 2020-Present", 
+            title = "Lead Paint Violations <br> per 1000 BBLs: 2020-Present <br>", 
             opacity = 1, 
             position = "topleft")
 
