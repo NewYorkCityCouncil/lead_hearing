@@ -1,5 +1,5 @@
 ---
-title: "lLead paint violations - worst Council Districts"
+title: "Lead paint violations: citywide and worst CDs"
 author: "Brook Frye"
 date: "4/21/2023"
 output: html_document
@@ -15,18 +15,18 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 # lead paint city council worst CDs
 
-The average number of lead paint violations per 1000 bbls across NYC is X
+The number of lead-based paint violations from Jan 2020 - March 2023 citywide is 58 per 1000 bbls. 
 
-Lead paint violations have remained consistently above average in the following council districts.
+Lead paint violations in Council Districts 10, 14, 7, 16, 15, and 40 have remained conisitenly high since 2020 (violations per 1000 bbls: 1477, 1004, 745, 730, 613, 390, respectively.) 
 
-BBLs that have repeatedly failed to remediate lead-paint violations are 
+
 
 ```{r}
 hmcv_sub <- fread("data/lead_data_hmcv_4_11_23.csv")
 hmcv_sub[, inspectiondate := as.Date(inspectiondate)]
 hmcv_sub[, yearinspect := year(inspectiondate)]
 
-# check nas
+# fix nas
 hmcv_sub[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
 hmcv_sub[streetname %in% "BEACH 88 STREET", councildistrict :=  32]
 hmcv_sub[streetname %in% "GRAND CENTRAL PARKWAY SOUTH", councildistrict :=  24]
@@ -49,19 +49,16 @@ lead_paint_sub[, vios_cd := length(unique(violationid)), by = .(CounDist)]
 lead_map <- unique(merge(lead_paint_sub[ ,.(CounDist, vios_cd, yearinspect)], bbls_cd))
 lead_map[, norm_vios_cd := (vios_cd/N)*1000, by = .(yearinspect)]
 
+lead_map[,(sum(vios_cd))/(sum(N)) * 1000]
+
 # number of violations per year by cd
 
 setorder(lead_map, yearinspect, -norm_vios_cd)
+by_year_inspects <- split(lead_map, lead_map$yearinspect)
 
-split(lead_map, lead_map$CounDist)
-
-
-
+# worst CDs since 2020
+lapply(by_year_inspects, head)
 ```
 
 
-# lead paint worst bbls 
-```{r}
-
-```
 
