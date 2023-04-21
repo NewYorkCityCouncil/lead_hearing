@@ -12,6 +12,7 @@ c ("data.table",
 "htmltools",
 "Rcpp",
 "htmlwidgets", 
+"stringr",
 remotes::install_github("newyorkcitycouncil/councildown"))
 
 #checks if packages has been previously installed
