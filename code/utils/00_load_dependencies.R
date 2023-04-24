@@ -14,6 +14,7 @@ c ("dplyr", "ggplot2",
 "Rcpp",
 "htmlwidgets", 
 "stringr",
+"dplyr",
 remotes::install_github("newyorkcitycouncil/councildown"))
 
 #checks if packages has been previously installed
