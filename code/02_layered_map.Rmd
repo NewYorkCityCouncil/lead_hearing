@@ -1,13 +1,12 @@
 ---
-title: "lead_by_cd_overall"
+title: "02_layered_map"
 output: html_document
 date: "2023-04-24"
 ---
 
 lead / all litigation types by cd 
 
-```{r setup, include=FALSE}
-setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
+```{r}
 source("code/utils/00_load_dependencies.R")
 ```
 
@@ -15,46 +14,29 @@ Data Source:
 https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc
 
 ```{r}
-# ---- LOAD DATA ----
-litigations <-fread("https://data.cityofnewyork.us/resource/59kj-x8nc.csv?$limit=99999999999")
-litigations[, yr := year(caseopendate)]
-litigations <- litigations[, yr := year(caseopendate)]
-litigations <- litigations[litigations$yr>2005,] # not complete data
-```
-
-```{r}
-# ---- CLEAN DATA ----
-lead_litigations <- unique(litigations[grep("lead", casetype, ignore.case = TRUE), ])
-lead_litigations <- unique(lead_litigations[!grep("non-lead", casetype, ignore.case = TRUE), ])
-lead_litigations[, lit_bbl := length(unique(litigationid)), by = .(bbl)]
-```
-
-```{r}
 # ---- merge lead data w/ council district shp
 council_districts <- council_districts %>%
   rename("council_district" = "CounDist")
 lead_lit_cd <- lead_litigations %>% full_join(y = council_districts, by = 'council_district') %>%
                 st_as_sf() 
-lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,]
-lit_cd <- litigations %>% full_join(y = council_districts, by = 'council_district') %>%
-                st_as_sf() 
+lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,] # removing this one because there's no obs. in cd 51...
 ```
 
 ```{r}
+# ---- sum litigations (lead, all)
 lead_lit_cd_sums <- lead_lit_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
 lit_cd_sums <- lit_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
 ```
 
 ```{r}
+# ---- rejoin the two litigation dfs
 lead_over_all_lits_cd <- left_join(lit_cd_sums, lead_lit_cd_sums %>% as.data.frame() %>% select(-geometry), by = "council_district")
-```
-
-```{r}
 lead_over_all_lits_cd$prop_lead <- lead_over_all_lits_cd$count.y/lead_over_all_lits_cd$count.x
 lead_over_all_lits_cd <- lead_over_all_lits_cd[complete.cases(lead_over_all_lits_cd$prop_lead), ]
 ```
 
 ```{r}
+# ---- set up color palettes for mapping
 pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
   domain = lead_over_all_lits_cd$prop_lead, 
@@ -71,53 +53,47 @@ pal2 = colorBin(
 
 ```{r}
 # ---- MAP 1 ----
-# ---- all lead litigations on opendata, compiled since august 2006
+# ---- % lead litigations of all HPD litigations
 prop_of_lits <- leaflet() %>%
   addCouncilStyle(add_dists = TRUE) %>%
   addPolygons(data=lead_over_all_lits_cd, weight=1, col=~pal(prop_lead), fillOpacity = .7,
               popup = paste0("<strong>Percentage lead-related (of all litigations): </strong>", 
                              round(lead_over_all_lits_cd$prop_lead*100,2),"%", "<br>"))%>%
   addLegend("topleft", pal=pal, values=unique(lead_over_all_lits_cd$prop_lead), title="Lead Litigations", opacity = 1, position = "topleft")
-```
-
-```{r}
-setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
+# ---- save map 1
 saveWidget(prop_of_lits, file=file.path('visuals/april_2023', 
                                "pct_lead_of_all_lits_by_cd.html"))
 mapshot(prop_of_lits, file = "visuals/april_2023/pct_lead_of_all_lits_by_cd.png")
 ```
 
 ```{r}
+# ---- MAP 2 ----
+# ---- base layer: number of lead litigations
+# ---- overlay: % lead litigations of all HPD litigations
 num_and_pct_lits <- leaflet() %>%
   addCouncilStyle(add_dists = TRUE) %>%
   addPolygons(data=lead_lit_cd_sums, weight=1, col=~pal2(count), fillOpacity = .6,
               popup = paste0("<strong>Number of HPD lead litigations: </strong>", 
-                             lead_lit_cd_sums$count, "<br>"), group="Num") %>%
+                             lead_lit_cd_sums$count, "<br>"), 
+              group="Num") %>%
   addPolygons(data=lead_over_all_lits_cd, weight=1, col=~pal(prop_lead), fillOpacity = .55,
               popup = paste0("<strong>Percent of total HPD litigations: </strong>", 
-                             round(lead_over_all_lits_cd$prop_lead*100,2),"%", "<br>", "<strong>Number of lead litigations: </strong>", lead_over_all_lits_cd$`count.y`, "<br>"),group="Percent of HPD Total")%>%
-    addLegend("topleft", pal = pal2, values = unique(lead_lit_cd_sums$count), 
-            title = "Number of Litigations: 2006-Present", opacity = 1, position = "topleft",group="Num") %>%
-  
+                             round(lead_over_all_lits_cd$prop_lead*100,2),"%", "<br>", 
+                             "<strong>Number of lead litigations: </strong>", lead_over_all_lits_cd$`count.y`, "<br>"),
+              group="Percent of HPD Total") %>%
+  addLegend("topleft", pal = pal2, values = unique(lead_lit_cd_sums$count), 
+            title = "Number of Litigations: 2006-Present", opacity = 1, position = "topleft", group="Num") %>%
   addLegend("topleft", pal = pal, values = unique(lead_over_all_lits_cd$prop_lead), 
-            title = "Percent of HPD Total: 2006-Present", opacity = 1, position = "topleft",group="Percent of HPD Total") %>%
-
+            title = "Percent of HPD Total: 2006-Present", opacity = 1, position = "topleft", group="Percent of HPD Total") %>%
   addLayersControl(
- #   baseGroups = c("Num"),
+    # baseGroups = c("Num"),
     overlayGroups = c("Percent of HPD Total"),
     options = layersControlOptions(collapsed = FALSE)
   ) 
-```
-
-```{r}
-setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
+# ---- save map 1
 saveWidget(num_and_pct_lits, file=file.path('visuals/april_2023', 
                                "pct_lits_layered_over_num_lits_by_cd.html"))
 mapshot(num_and_pct_lits, file = "visuals/april_2023/pct_lits_layered_over_num_lits_by_cd.png")
 ```
-```{r}
-#lead_litigations[lead_litigations$council_district==28,]
-```
-
 
 2020-pres
