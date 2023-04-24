@@ -1,7 +1,7 @@
 ## Load Libraries -----------------------------------------------
 
 list.of.packages <- 
-c ("dplyr",
+c ("dplyr", "ggplot",
   "data.table",
 "leaflet",
 "zoo",
