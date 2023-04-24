@@ -1,7 +1,8 @@
 ## Load Libraries -----------------------------------------------
 
 list.of.packages <- 
-c ("data.table",
+c ("dplyr",
+  "data.table",
 "leaflet",
 "zoo",
 "leaflet",
@@ -33,6 +34,10 @@ council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/d
 	st_read() %>% 
 	st_transform(st_crs(4326))
   
-pluto_file <- fread("https://data.cityofnewyork.us/resource/64uk-42ks.csv?$limit=99999999") pluto_sub <- pluto_file[unitsres > 0, .(    bbl = str_sub(as.character(bbl), 1, 10),    borough = borough,    council_dist = council)]
+pluto_file <- fread("https://data.cityofnewyork.us/resource/64uk-42ks.csv?$limit=99999999") 
+pluto_sub <- pluto_file[unitsres > 0, .(
+    bbl = str_sub(as.character(bbl), 1, 10),
+    borough = borough,
+    council_dist = council)]
     
     
