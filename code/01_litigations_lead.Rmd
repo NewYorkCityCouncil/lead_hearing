@@ -130,7 +130,7 @@ boro_redo_formatted <- boro_redo_formatted %>%
                      "BK" = "BROOKLYN",
                      "QN" = "QUEENS",
                      "SI" = "STATEN ISLAND"))
-write.csv(boro_redo_formatted, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
+# write.csv(boro_redo_formatted, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
 ```
 ```{r}
 # ---- plot boro data
@@ -139,19 +139,26 @@ ggsave(temp, filename = "visuals/april_2023/litgtns_per_thousand_bldngs_by_boro.
 ```
 
 ```{r}
-bar <- ggplot(data=boro_redo_formatted, aes(reorder(x=boro,per_thousand_bldngs), 
-                                            y=per_thousand_bldngs,
-                                            tooltip = paste0(boro, "\n", round(per_thousand_bldngs,2)," HPD Lead Litigations"))) + geom_bar(stat="identity") + 
+bar <- 
+  ggplot(data=boro_redo_formatted,
+         aes(reorder(x=boro,per_thousand_bldngs),
+             y=per_thousand_bldngs,
+             tooltip = paste0(boro, "\n",
+                          round(per_thousand_bldngs,2),
+                          " HPD Lead Litigations"))) +
   coord_flip() +
-  geom_col_interactive(width = 0.8) +
+  geom_col_interactive(width = 0.8, fill = "#2F56A6") +
   theme_nycc() +
   scale_y_continuous(expand = expansion(mult = c(0, .1))) +
-  labs(y="HPD Lead Paint Litigations per 1000 units", x=element_blank())
+  labs(y="HPD Lead Paint Litigations per 1000 units",
+       x=element_blank())
 
 tooltip_css = "background-color:#CACACA;"
+
 plot_interactive = girafe(ggobj = bar,  
                           width_svg = 8,
                           height_svg = 5,
                           options = list(opts_tooltip(css = tooltip_css)))
-save_html(plot_interactive, file.path("/visuals/april_2023", "interactive_per_thousand_buildings_by_boro.html"))
+
+save_html(plot_interactive, file.path("visuals", "april_2023", "interactive_per_thousand_buildings_by_boro.html"))
 ```
