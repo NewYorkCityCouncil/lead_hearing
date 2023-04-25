@@ -13,17 +13,15 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 Housing Maintenance Code Violations - lead based paint hazard
 ```{r include=FALSE}
-hmcv_sub <- fread("data/lead_data_hmcv_4_11_23.csv")
-hmcv_sub[, inspectiondate := as.Date(inspectiondate)]
-hmcv_sub[, yearinspect := year(inspectiondate)]
+lead_paint <-fread("data/lead_data_hmcv_4_24_2023.csv")
+
 
 # check nas
-hmcv_sub[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
-hmcv_sub[streetname %in% "BEACH 88 STREET", councildistrict :=  32]
-hmcv_sub[streetname %in% "GRAND CENTRAL PARKWAY SOUTH", councildistrict :=  24]
-hmcv_sub[streetname %in% "ADAM CLAYTONPOWELL JR BOULEVARD", councildistrict :=  9]
+leaad_paint[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
+leaad_paint[streetname %in% "BEACH 88 STREET", councildistrict :=  32]
+leaad_paint[streetname %in% "GRAND CENTRAL PARKWAY SOUTH", councildistrict :=  24]
+leaad_paint[streetname %in% "ADAM CLAYTONPOWELL JR BOULEVARD", councildistrict :=  9]
 
-lead_paint <- hmcv_sub[grep("SECTION 27-2056.6", novdescription, ignore.case = TRUE), .(violationid, inspectiondate, CounDist=councildistrict, yearinspect)]
 
 # number of violations per year by cd
 lead_paint_cd <- lead_paint[, .(vios_cd = length(unique(violationid))), by = .(CounDist, yearinspect)]
@@ -48,27 +46,26 @@ lead_paint_sub[, vios_cd := length(unique(violationid)), by = .(CounDist)]
 lead_map <- unique(merge(lead_paint_sub[ ,.(CounDist, vios_cd)], bbls_cd))
 lead_map[, norm_vios_cd := (vios_cd/N)*1000]
 setnames(lead_map, "CounDist", "coun_dist")
+lead_map[is.na(coun_dist), coun_dist := 51]
 
 council_districts <- read_sf("data/City Council Districts/") %>% st_transform('+proj=longlat +datum=WGS84' )
-
 
 lead_sf <- left_join(lead_map, council_districts) %>% st_as_sf() 
 
 pal = colorBin(
   palette = "Blues",
-  domain = lead_map$norm_vios_cd, 
-  bins = 6
+  domain = lead_sf$norm_vios_cd, 
+  bins = 8
 )
 
-l <-  leaflet(data = lead_sf) %>%
-  addCouncilStyle() %>%
-        addPolygons(weight=1,
-        col=~pal(norm_vios_cd),
-              fillOpacity = .7,
-              popup = paste0("<strong>Number of violations: </strong>",
-                             lead_map$vios_cd, "<br>"))
-
-
+l <- leaflet() %>% 
+addCouncilStyle() %>% 
+addPolygons(data = lead_sf, 
+                     weight=1,
+col=~pal(norm_vios_cd),
+fillOpacity = .7,
+popup = paste0(popup = paste0("<strong>Number of violations: </strong>",  
+lead_sf$vios_cd, "<br>")))
 
 l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1, 
       color = "#2F56A6", opacity = .5, smoothFactor = 0, 
@@ -85,7 +82,7 @@ l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1,
             opacity = 1, 
             position = "topleft")
 
-saveWidget(l, "~/Desktop/lead_hearing//visuals/april_2023/lead_violations_by-cd_2023.html")
+  saveWidget(l, "~/Desktop/lead_hearing//visuals/april_2023/lead_violations_by-cd_2023.html")
 
 
 ```
