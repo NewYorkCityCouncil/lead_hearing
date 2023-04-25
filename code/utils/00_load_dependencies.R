@@ -41,4 +41,6 @@ pluto_sub <- pluto_file[unitsres > 0, .(
     borough = borough,
     council_dist = council)]
     
+under_six_df <- read.csv('data/input/council-estimates_under-6.csv')under_six_df <- under_six_df %>%        rename("council_district" = "CounDist")# make geometry column a list to convert into spatialunder_six_df$geometry <- as.list(under_six_df$geometry)# make into a spatial objectunder_six_shp <- under_six_df %>% st_as_sf()  st_crs(under_six_shp) <- 4326
+    
     
