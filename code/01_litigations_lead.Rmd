@@ -70,6 +70,11 @@ After Trial: Judgments awarded by the Court at the conclusion of trial at which 
 xxx
 
 ```{r}
+council_districts <- council_districts %>%
+  rename("council_district" = "CounDist")
+lead_lit_cd <- lead_litigations %>% full_join(y = council_districts, by = 'council_district') %>%
+                st_as_sf() 
+lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,] # removing this one because there's no obs. in cd 51...
 # ---- look at particularly bad litigation cases?
 lead_lit_cd <- lead_lit_cd %>% mutate(findingofharassment = na_if(findingofharassment, ""))
 judge_harass_fine <- filter(lead_lit_cd,
