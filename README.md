@@ -13,6 +13,8 @@ An associated webpage for this analysis can be found [on the council website](ht
 
 #### Methodology 
 
+generate-under5-by-tract_nyc.ipynb uses the Python package pygris to generate a table containing the number of children under 5 living in each NYC census tract.
+
 ##### Summary & Intention
  Fill- in
 
