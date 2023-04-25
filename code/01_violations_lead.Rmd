@@ -17,7 +17,7 @@ lead_paint <-fread("data/lead_data_hmcv_4_24_2023.csv")
 
 
 # check nas
-leaad_paint[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
+lead_paint[streetname %in% "FOREST AVENUE" & housenumber %in% "861", councildistrict :=  49]
 leaad_paint[streetname %in% "BEACH 88 STREET", councildistrict :=  32]
 leaad_paint[streetname %in% "GRAND CENTRAL PARKWAY SOUTH", councildistrict :=  24]
 leaad_paint[streetname %in% "ADAM CLAYTONPOWELL JR BOULEVARD", councildistrict :=  9]
@@ -65,12 +65,13 @@ addPolygons(data = lead_sf,
 col=~pal(norm_vios_cd),
 fillOpacity = .7,
 popup = paste0(popup = paste0("<strong>Number of violations: </strong>",  
-lead_sf$vios_cd, "<br>")))
+lead_sf$vios_cd, "<br>", " </strong> Violations per BBL: </strong>", round(lead_sf$norm_vios_cd, 2),  "<br>")))
 
 l <- l %>% leaflet::addPolygons(data = dists, fill = FALSE, weight = 1, 
       color = "#2F56A6", opacity = .5, smoothFactor = 0, 
       group = "Council Districts") %>%
-      leaflet::addLabelOnlyMarkers(data = dists, lat = ~lab_y, lng = ~lab_x, label = ~coun_dist,
+      leaflet::addLabelOnlyMarkers(data = dists, lat = ~lab_y, lng = ~lab_x, 
+                                   label = ~coun_dist,
       labelOptions = leaflet::labelOptions(permanent = TRUE, noHide = TRUE,
        textOnly = TRUE,
        textsize = 12, direction = "center", style = list(color = "#23417D",
