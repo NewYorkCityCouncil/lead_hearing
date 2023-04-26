@@ -1,16 +1,13 @@
 ---
-title: "Lead Litigations"
-author: "Reese Hirota"
+title: "01_litigations_lead"
 output: html_document
-date: "2023-04-11"
+date: "2023-04-26"
 ---
-
-Maps and charts on lead litigations.
 
 ```{r setup, include=FALSE}
 # ---- SETUP ----
-setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
-source("code/utils/00_load_dependencies.R")
+knitr::opts_chunk$set(echo = TRUE)
+source("../code/utils/00_load_dependencies.R")
 ```
 
 Data Source:
@@ -18,17 +15,18 @@ https://data.cityofnewyork.us/Housing-Development/Housing-Litigations/59kj-x8nc
 
 ```{r}
 # ---- LOAD DATA ----
-litigations <-fread("https://data.cityofnewyork.us/resource/59kj-x8nc.csv?$limit=99999999999")
-litigations[, yr := year(caseopendate)]
-litigations <- litigations[, yr := year(caseopendate)]
-litigations <- litigations[litigations$yr>2005,] # not complete data
+litigations <- vroom("https://data.cityofnewyork.us/resource/59kj-x8nc.csv?$limit=99999999999")
+setDT(litigations) # convert to data table
 ```
 
 ```{r}
-# ---- CLEAN DATA ----
+# --- CLEAN DATA ----
+litigations <- litigations[, yr := year(caseopendate)]
+litigations <- litigations[litigations$yr>2005,] # subset to years after 2005;
+                                                 # incomplete data before 2006
 lead_litigations <- unique(litigations[grep("lead", casetype, ignore.case = TRUE), ])
 lead_litigations <- unique(lead_litigations[!grep("non-lead", casetype, ignore.case = TRUE), ])
-lead_litigations[, lit_bbl := length(unique(litigationid)), by = .(bbl)]
+lead_litigatons <- lead_litigations[, lit_per_bbl := length(unique(litigationid)), by = .(bbl)] # how many litigations filed against unique bbl
 ```
 
 ```{r}
@@ -37,22 +35,65 @@ lead_litigations[, lit_bbl := length(unique(litigationid)), by = .(bbl)]
 temp <- lead_litigations %>% group_by(yr) %>% summarise(count_lead=n())
 temp2 <- litigations %>% group_by(yr) %>% summarise(count_total=n())
 temp <- temp2 %>% full_join(y = temp, by = 'yr')
-temp <- temp[temp$yr <= 2023 & !is.na(temp$yr) & !is.na(temp$count_lead), ] # not sure why NA/2030 is in there... data entry error?
+litigations_grouped <- temp[temp$yr <= 2023 & !is.na(temp$yr) & !is.na(temp$count_lead), ] # not sure why NA/2030 is in there... data entry error?
+rm(temp)
+rm(temp2)
+```
 
+```{r}
+# ---- BASIC GGPLOTS ----
 # ---- plot number of lead litigations by year
-lead_plot <- ggplot(data=(lead_litigations %>% group_by(yr) %>% summarise(count=n())), aes(x=yr, y=count)) + geom_line() + labs(title="Lead Litigation Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Number of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_plot, filename = "visuals/april_2023/lead_litigations.png", width = 8, height = 5)
+lead_plot <- ggplot(data=litigations_grouped, aes(x=yr, y=count_lead)) + geom_line() + labs(title="Lead Litigation Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Number of Cases") + theme_nycc() + scale_color_nycc()
+ggsave(lead_plot, filename = "../visuals/april_2023/lits_count.png", width = 8, height = 5)
+```
 
+```{r}
+# ---- BASIC GGPLOTS ----
 # ---- plot number of lead litigations by year, by casetype
 lead_casetype_plot <- ggplot(data=(lead_litigations %>% group_by(yr, casetype) %>% summarise(count=n())), aes(x=yr, y=count, col=casetype)) + geom_line() + labs(title="Lead Litigation Cases by Casetype (August 2006-Present)",subtitle="Data Provided by HPD", x="Year Case Opened", y="Number of Cases", color="Case Type") + theme_nycc() + scale_color_nycc()
-ggsave(lead_casetype_plot, filename = "visuals/april_2023/lead_litigations_by_casetype.png", width = 8, height = 5)
+ggsave(lead_casetype_plot, filename = "../visuals/april_2023/lits_by_casetype.png", width = 8, height = 5)
+```
 
+```{r}
+# ---- BASIC GGPLOTS ----
 # ---- plot prop lead litigations/total litigations by year
-lead_prp <- ggplot(data=temp, aes(x=yr, y=count_lead/count_total)) + geom_line() + labs(title="Lead Litigations: Proportion of Total Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Proportion of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_prp, filename = "visuals/april_2023/lead_litigations_prp_total.png", width = 8, height = 5)
+lead_prp <- ggplot(data=litigations_grouped, aes(x=yr, y=count_lead/count_total)) + geom_line() + labs(title="Lead Litigations: Proportion of Total Cases (August 2006-Present)", subtitle="Data Provided by HPD", x="Year Case Opened", y="Proportion of Cases") + theme_nycc() + scale_color_nycc()
+ggsave(lead_prp, filename = "../visuals/april_2023/lits_prp_total.png", width = 8, height = 5)
 # ---- format above plot as pct
-lead_pct <- ggplot(data=temp, aes(x=yr, y=count_lead/count_total)) + scale_y_continuous(labels=scales::percent) + geom_line() + labs(title="Lead Litigations: Percent of Total Cases (August 2006-Present)",subtitle="Data Provided by HPD", x="Year Case Opened", y="Percent of Cases") + theme_nycc() + scale_color_nycc()
-ggsave(lead_pct, filename = "visuals/april_2023/lead_litigations_pct_total2.png", width = 8, height = 5)
+lead_pct <- ggplot(data=litigations_grouped, aes(x=yr, y=count_lead/count_total)) + scale_y_continuous(labels=scales::percent) + geom_line() + labs(title="Lead Litigations: Percent of Total Cases (August 2006-Present)",subtitle="Data Provided by HPD", x="Year Case Opened", y="Percent of Cases") + theme_nycc() + scale_color_nycc()
+ggsave(lead_pct, filename = "../visuals/april_2023/lits_pct_total.png", width = 8, height = 5)
+```
+
+```{r}
+# ---- merge lead litigations with council district SHP
+council_districts <- council_districts %>%
+  rename("council_district" = "CounDist")
+lead_litigations_cd <- lead_litigations %>% full_join(y = council_districts, by = 'council_district') %>%
+                st_as_sf() 
+lead_litigations_cd <- lead_litigations_cd[lead_litigations_cd$council_district != 51,] # removing this one because there's no obs. in cd 51...
+```
+
+```{r}
+# ---- find lead litigations per thousand buildings by borough...
+buildings_in_boro <- pluto_sub %>% group_by(borough) %>% summarise(total_buildings=n())
+buildings_in_boro$boroid <- buildings_in_boro$borough
+buildings_in_boro <- buildings_in_boro %>% mutate(boroid=recode(boroid, "MN" = 1,
+                                           "BX" = 2,
+                                           "BK" = 3,
+                                           "QN" = 4,
+                                           "SI" = 5))
+lead_lits_in_boro  <- lead_litigations %>% group_by(boroid) %>% summarise(num_lit=n())
+leadlits_per_thousand_bbl <- buildings_in_boro %>% full_join(y = lead_lits_in_boro, by = 'boroid')
+leadlits_per_thousand_bbl$lit_per_thousand_buildings <- leadlits_per_thousand_bbl$num_lit/(leadlits_per_thousand_bbl$total_buildings/1000)
+# ---- write out csv of litigations per thousand buildings by borough
+write.csv(leadlits_per_thousand_bbl, "../data/output/lits_per_thousand_bbl_by_boro.csv", row.names=FALSE)
+```
+
+```{r}
+# ---- BASIC GGPLOTS ----
+# ---- plot lead litigations per thousand buildings by borough
+lead_thousandbbl <- ggplot(data=leadlits_per_thousand_bbl, aes(x=borough, y=lit_per_thousand_buildings)) + geom_bar(stat="identity") + labs(title="Lead Litigations: Per Thousand BBL (August 2006-Present)",subtitle="Data Provided by HPD", x="Borough", y="Litigations Per Thousand BBL") + theme_nycc() + scale_color_nycc()
+ggsave(lead_thousandbbl, filename = "../visuals/april_2023/lits_per_thousand_bldngs_by_boro.png", width = 8, height = 5)
 ```
 
 xxx
@@ -70,14 +111,9 @@ After Trial: Judgments awarded by the Court at the conclusion of trial at which 
 xxx
 
 ```{r}
-council_districts <- council_districts %>%
-  rename("council_district" = "CounDist")
-lead_lit_cd <- lead_litigations %>% full_join(y = council_districts, by = 'council_district') %>%
-                st_as_sf() 
-lead_lit_cd <- lead_lit_cd[lead_lit_cd$council_district != 51,] # removing this one because there's no obs. in cd 51...
 # ---- look at particularly bad litigation cases?
-lead_lit_cd <- lead_lit_cd %>% mutate(findingofharassment = na_if(findingofharassment, ""))
-judge_harass_fine <- filter(lead_lit_cd,
+lead_litigations_cd <- lead_litigations_cd %>% mutate(findingofharassment = na_if(findingofharassment, ""))
+judge_harass_fine <- filter(lead_litigations_cd,
                             grepl("After", findingofharassment, fixed = TRUE) | 
                               casejudgement == "YES" |
                               !is.na(penalty))
@@ -89,83 +125,60 @@ temp <- filter(litigations,
                               !is.na(penalty)) # 4629 (out of 193927 obs total), 2.4%
                               # compared to >.001% of lead litigations; so less common
                               # for lead litigations but not super common regardless
+rm(temp)
 ```
 
-Find lead litigations per thousand buildings by borough...
-
-```{r}
-buildings_in_boro <- pluto_sub %>% group_by(borough) %>% summarise(total_buildings=n())
-lead_lit_boro <- lead_litigations %>% group_by(boroid) %>% summarise(num_lit=n())
+```{r, include=FALSE}
+# ---- REDO WORK JUST FOR WEB PAGE ----
+# ---- SAME THING AS lits_per_thousand_bldngs_by_boro.png ----
+# boro_redo$units <- "added back in just for formatting"
+# boro_redo$per_thousand_units <- "added added back in just for formatting"
+# # new format: boro / units / buildings/ count / per thousand / per thousand units
+# boro_redo_formatted <- boro_redo[,c(1, 6, 2, 4, 5, 7)]
+# boro_redo_formatted <- boro_redo_formatted %>% 
+#     rename("boro" = "borough",
+#            "bldngs" = "total_buildings",
+#            "count" = "num_lit",
+#            "per_thousand_bldngs" = "lit_per_thousand_buildings") %>%
+#   mutate(boro=recode(boro, "MN" = "MANHATTAN", 
+#                      "BX" = "BRONX",
+#                      "BK" = "BROOKLYN",
+#                      "QN" = "QUEENS",
+#                      "SI" = "STATEN ISLAND"))
+# # write.csv(boro_redo_formatted, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
+# ```
+# 
+# ```{r}
+# # ---- plot boro data
+# temp <- ggplot(data=boro_redo, aes(x=borough, y=lit_per_thousand_buildings)) + geom_bar(stat="identity") + theme_nycc() + scale_color_nycc()
+# ggsave(temp, filename = "visuals/april_2023/litgtns_per_thousand_bldngs_by_boro.png", width = 8, height = 5)
+# ```
+# 
+# ```{r}
+# bar <- 
+#   ggplot(data=boro_redo_formatted,
+#          aes(reorder(x=boro,per_thousand_bldngs),
+#              y=per_thousand_bldngs,
+#              tooltip = paste0(boro, "\n",
+#                           round(per_thousand_bldngs,2),
+#                           " HPD Lead Litigations"))) +
+#   coord_flip() +
+#   geom_col_interactive(width = 0.8, fill = "#2F56A6") +
+#   theme_nycc() +
+#   scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+#   labs(y="HPD Lead Paint Litigations per 1000 buildings",
+#        x=element_blank())
+# 
+# tooltip_css = "background-color:#CACACA;"
+# 
+# plot_interactive = girafe(ggobj = bar,  
+#                           width_svg = 8,
+#                           height_svg = 5,
+#                           options = list(opts_tooltip(css = tooltip_css)))
+# 
+# save_html(plot_interactive, file.path("visuals", "april_2023", "interactive_per_thousand_buildings_by_boro.html"))
+# ---- REDO WORK JUST FOR WEB PAGE ----
+# ---- SAME THING AS lits_per_thousand_bldngs_by_boro.png ----
 ```
 
-```{r}
-buildings_in_boro$boroid <- buildings_in_boro$borough
-buildings_in_boro <- buildings_in_boro %>% mutate(boroid=recode(boroid, "MN" = 1,
-                                           "BX" = 2,
-                                           "BK" = 3,
-                                           "QN" = 4,
-                                           "SI" = 5))
-```
 
-```{r}
-boro_redo <- buildings_in_boro %>% full_join(y = lead_lit_boro, by = 'boroid')
-boro_redo$lit_per_thousand_buildings <- boro_redo$num_lit/(boro_redo$total_buildings/1000)
-```
-
-```{r}
-# ---- write out csv of boro data
-write.csv(boro_redo, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
-```
-
-```{r}
-boro_redo$units <- "added back in just for formatting"
-boro_redo$per_thousand_units <- "added added back in just for formatting"
-```
-
-```{r}
-# new format: boro / units / buildings/ count / per thousand / per thousand units
-boro_redo_formatted <- boro_redo[,c(1, 6, 2, 4, 5, 7)]
-boro_redo_formatted <- boro_redo_formatted %>% 
-    rename("boro" = "borough",
-           "bldngs" = "total_buildings",
-           "count" = "num_lit",
-           "per_thousand_bldngs" = "lit_per_thousand_buildings") %>%
-  mutate(boro=recode(boro, "MN" = "MANHATTAN", 
-                     "BX" = "BRONX",
-                     "BK" = "BROOKLYN",
-                     "QN" = "QUEENS",
-                     "SI" = "STATEN ISLAND"))
-# write.csv(boro_redo_formatted, "data/output/litgtns_per_thousand_bldngs_by_boro.csv", row.names=FALSE)
-```
-```{r}
-# ---- plot boro data
-temp <- ggplot(data=boro_redo, aes(x=borough, y=lit_per_thousand_buildings)) + geom_bar(stat="identity") + theme_nycc() + scale_color_nycc()
-ggsave(temp, filename = "visuals/april_2023/litgtns_per_thousand_bldngs_by_boro.png", width = 8, height = 5)
-```
-
-```{r}
-bar <- 
-  ggplot(data=boro_redo_formatted,
-         aes(reorder(x=boro,per_thousand_bldngs),
-             y=per_thousand_bldngs,
-             tooltip = paste0(boro, "\n",
-                          round(per_thousand_bldngs,2),
-                          " HPD Lead Litigations"))) +
-  coord_flip() +
-  geom_col_interactive(width = 0.8, fill = "#2F56A6") +
-  theme_nycc() +
-  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
-  labs(y="HPD Lead Paint Litigations per 1000 buildings",
-       x=element_blank())
-
-bar
-
-tooltip_css = "background-color:#CACACA;"
-
-plot_interactive = girafe(ggobj = bar,  
-                          width_svg = 8,
-                          height_svg = 5,
-                          options = list(opts_tooltip(css = tooltip_css)))
-
-save_html(plot_interactive, file.path("visuals", "april_2023", "interactive_per_thousand_buildings_by_boro.html") )
-```
