@@ -1,0 +1,126 @@
+---
+title: "02_litigations_lead_maps"
+output: html_document
+date: "2023-04-26"
+---
+
+Run 01_litigations_lead.Rmd first.
+
+```{r}
+# ---- MAP 1 ----
+# ---- group lead litigation sums, set up color palette
+lead_litigations_cd_sums <- lead_litigations_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
+
+pal = colorBin(
+  palette = rev(nycc_pal("cool")(100)),
+  domain = lead_litigations_cd_sums$count, 
+  na.color = "White", 
+  reverse = FALSE
+)
+```
+
+```{r}
+# ---- MAP 1 ----
+# ---- all lead litigations on opendata, compiled since august 2006
+all_leadlit <- leaflet() %>%
+  addCouncilStyle(add_dists = TRUE) %>%
+  addPolygons(data=lead_litigations_cd_sums, weight=1, col=~pal(count), fillOpacity = .7,
+              popup = paste0("<strong>Number of litigations: </strong>", 
+                             lead_litigations_cd_sums$count, "<br>")) %>%
+  addLegend("topleft", pal = pal, values = unique(lead_litigations_cd_sums$count), 
+            title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft") 
+```
+
+```{r}
+# ---- MAP 1 ----
+# ---- save map 1
+saveWidget(all_leadlit, file=file.path('../visuals/april_2023', 
+                               "lead_litigations_by_cd.html"))
+mapshot(all_leadlit, file = "../visuals/april_2023/lead_litigations_by_cd.png")
+```
+
+```{r}
+# ---- MAP 2 ----
+# ---- get number of litigaitons per bbl
+lit_in_bbl <- distinct(lead_litigations) %>%
+  mutate(addr = paste(housenumber, streetname))
+
+pal2 = colorBin(
+  palette = rev(nycc_pal("cool")(100)),
+  domain = lit_in_bbl$lit_per_bbl,
+  reverse = FALSE
+)
+```
+
+```{r}
+# ---- MAP 2 ----
+# ---- all lead litigations on opendata, compiled since august 2006
+litigations_in_bbl <- leaflet() %>% 
+  addPolygons(data=council_districts, weight=1, col='#d3d3d3', fillOpacity = 0.2) %>%
+  addCouncilStyle(add_dists = TRUE) %>%
+  addCircles(data=lit_in_bbl,
+                 lng=~longitude, lat=~latitude,
+                 color = ~pal2(lit_per_bbl), 
+                 popup = paste0("<strong>Number of litigations: </strong>", lit_in_bbl$lit_per_bbl, "<br>",
+                                "<strong>Address: </strong>", lit_in_bbl$addr, "<br>",
+                                "<strong>Respondent: </strong>", lit_in_bbl$respondent, "<br>"),
+                 group = df,
+                 label =  ~paste("Lead Litigations since August 2006:", lit_in_bbl$lit_per_bbl),
+                 weight = 2,
+                 radius = 1, 
+                 stroke = 2, 
+                 opacity = .5, 
+                 labelOptions = labelOptions(noHide = F,
+                 direction = 'auto')) %>% 
+   addLegend("topleft", pal = pal2, values = unique(lit_in_bbl$lit_per_bbl), title = "Lead Litigations: 2006-Present", opacity = 1, position = "topleft")
+```
+
+```{r}
+# ---- MAP 2 ----
+# ---- save map 2
+saveWidget(litigations_in_bbl, file=file.path('../visuals/april_2023', 
+                               "lead_litigations_by_bbl.html"))
+mapshot(litigations_in_bbl, file = "../visuals/april_2023/lead_litigations_by_bbl.png")
+```
+
+```{r}
+# ---- MAP 3 ----
+# ---- merge pluto data with council district shp
+pluto_sub <- pluto_sub %>% rename("council_district" = "council_dist")
+pluto_sub_cd <- pluto_sub %>% full_join(y = council_districts, by = 'council_district') %>% st_as_sf()
+# ----  get prop of lead litigations per thousand buildings
+pluto_sub_cd_sums <- pluto_sub_cd %>% group_by(geometry, council_district) %>% summarise(count=n())
+lead_prp_mapinfo <- left_join(lead_litigations_cd_sums, pluto_sub_cd_sums %>% as.data.frame() %>% select(-geometry), by = "council_district")
+lead_prp_mapinfo$lit_per_thous_bldngs <- (lead_prp_mapinfo$`count.x`/lead_prp_mapinfo$`count.y`)*1000
+lead_prp_mapinfo <- lead_prp_mapinfo %>% select('geometry','council_district', lit_per_thous_bldngs)
+```
+
+```{r}
+# ---- MAP 3 ----
+# ---- set up color palette
+pal = colorBin(
+  palette = rev(nycc_pal("cool")(100)),
+  domain = lead_prp_mapinfo$lit_per_thous_bldngs, 
+  na.color = "White", 
+  reverse = FALSE
+)
+```
+
+```{r}
+# ---- MAP 3 ----
+# ---- all lead litigations on opendata, compiled since august 2006
+leadlits_per_thousand_bbl_map <- leaflet() %>% 
+  addCouncilStyle(add_dists = TRUE) %>%
+  addPolygons(data=lead_prp_mapinfo, weight=1, col=~pal(lit_per_thous_bldngs), fillOpacity = .7,
+              popup = paste0("<strong>Number of litigations per thousand buildings: </strong>", round(lead_prp_mapinfo$lit_per_thous_bldngs,2), "<br>")) %>%
+  addLegend("topleft", pal=pal, values=unique(lead_prp_mapinfo$lit_per_thous_bldngs), title="Lead Litigations (per Thousand Buildings): 2006-Present", opacity = 1, position = "topleft")
+```
+
+```{r}
+# ---- MAP 3 ----
+# ---- save map 3
+saveWidget(leadlits_per_thousand_bbl_map, file=file.path('../visuals/april_2023', 
+                               "lits_per_thousand_bldngs_by_cd.html"))
+mapshot(leadlits_per_thousand_bbl_map, file = "../visuals/april_2023/lits_per_thousand_bldngs_by_cd.png")
+```
+
