@@ -13,8 +13,6 @@ An associated webpage for this analysis can be found [on the council website](ht
 
 #### Methodology 
 
-generate-under5-by-tract_nyc.ipynb uses the Python package pygris to generate a table containing the number of children under 5 living in each NYC census tract.
-
 ##### Summary & Intention
 As required under state law, only 50% of NYC’s toddlers are being tested for lead. Therefore, the NYC Council is putting in place more protections for these vulnerable children. Now, 80% of NYC's children under three are being tested at least once.
 
@@ -36,6 +34,3 @@ A traunch of bills was passed previously to address lead paint in NYC Homes that
 - Strengthen the City’s enforcement ability to ensure landlords are complying with the City’s lead laws, and expand lead reporting requirements for the Department of Health and Mental Hygiene (DOHMH) and the Department of Housing Preservation and Development (HPD). [Read the Bill: Int 918-A](https://legistar.council.nyc.gov/LegislationDetail.aspx?ID=3498572&GUID=AB24032F-962B-492E-AEEA-F1A9118CAEE7&Options=ID%7CText%7C&Search=918-A)
 - Extend current requirements for daycares to test for lead-based paint annually to other facilities with children under the age of 6, including preschools and nursery schools. [Read the Bill: Int 920-A](https://legistar.council.nyc.gov/LegislationDetail.aspx?ID=3498552&GUID=4B027FB2-02C8-4571-9F3B-5DA56A4A1AF8&Options=ID%7CText%7C&Search=920-A)
 - Increase landlord requirements to inform tenants about building owners’ responsibilities under the City’s lead laws. [Read the Bill: Int 1117-A](https://legistar.council.nyc.gov/LegislationDetail.aspx?ID=3683904&GUID=BEAFC322-DEFE-4780-BF47-3C6FE9D5BF72&Options=&Search=)
-
-#### Scripts
-Fill-in code run down for reproducibility
