@@ -1,5 +1,6 @@
 ---
 title: "02_litigations_lead_maps"
+author: "Reese Hirota"
 output: html_document
 date: "2023-04-26"
 ---
@@ -123,4 +124,5 @@ saveWidget(leadlits_per_thousand_bbl_map, file=file.path('../visuals/april_2023'
                                "lits_per_thousand_bldngs_by_cd.html"))
 mapshot(leadlits_per_thousand_bbl_map, file = "../visuals/april_2023/lits_per_thousand_bldngs_by_cd.png")
 ```
+
 

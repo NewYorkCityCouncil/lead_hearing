@@ -1,5 +1,6 @@
 ---
 title: "01_litigations_lead"
+author: "Reese Hirota"
 output: html_document
 date: "2023-04-26"
 ---

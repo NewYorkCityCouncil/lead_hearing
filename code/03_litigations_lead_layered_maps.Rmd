@@ -1,0 +1,244 @@
+---
+title: "03_litigations_lead_layered_maps"
+output: ioslides_presentation
+date: "2023-04-27"
+---
+
+Run 02_litigations_lead_maps.Rmd (which also requires 01_litigations_lead.Rmd) first.
+Layered maps, kinda funky.
+
+```{r}
+# ---- MAP 4 ----
+# ---- grab % population under 6, # lead litigations, # lead litigations per thousand bbl
+under_six_shp_merge <- left_join(lead_litigations_cd_sums, pluto_sub_cd_sums %>% as.data.frame() %>% select(-geometry), by = "council_district")
+under_six_shp_merge <- left_join(under_six_shp_merge, under_six_df %>% as.data.frame() %>% select(-geometry), by = "council_district")
+under_six_shp_merge$lit_per_thous_bbl <- (under_six_shp_merge$`count.x`/under_six_shp_merge$`count.y`)*1000
+under_six_shp_short <- under_six_shp_merge %>% select('geometry','council_district', lit_per_thous_bbl, `count.y`, `count.x`, `Percent.Under.6`)
+# count x: # lead litigations
+# count y: # bbl
+```
+
+```{r}
+# ---- MAP 4 ----
+# ---- set up color palettes for mapping
+child_pal = colorBin(
+  palette = rev(nycc_pal("warm")(100)),
+  domain = under_six_shp_short$`Percent.Under.6`,
+  na.color = "White",
+  reverse = FALSE
+)
+per_thousnd_pal = colorBin(
+  palette = rev(nycc_pal("cool")(100)),
+  domain = under_six_shp_short$lit_per_thous_bbl,
+  na.color = "White",
+  reverse = FALSE
+)
+```
+
+```{r}
+# 
+# ---- layer 1: pct of population <6 years old
+# ---- layer 2: lead litigations per thousand buildings
+age_thousand_map <- leaflet() %>%
+  addCouncilStyle(add_dists = TRUE) %>%
+  addPolygons(data=under_six_shp_short, weight=1, col=~child_pal(`Percent.Under.6`), fillOpacity = .6,
+              popup = paste0("<strong>Percent of Population under 6 (years): </strong>", under_six_shp_short$Percent.Under.6, "<br>",
+                "<strong>Number of HPD lead litigations: </strong>", under_six_shp_short$`count.x`, "<br>",
+                "<strong>Lead litigations per thousand buildings: </strong>", 
+                round(under_six_shp_short$lit_per_thous_bbl,2), "<br>"),
+              group="Children") %>%
+  
+  addPolygons(data=under_six_shp_short, weight=1, col=~per_thousnd_pal(lit_per_thous_bbl), fillOpacity = .6,
+              popup = paste0("<strong>Percent of Population under 6 (years): </strong>", under_six_shp_short$Percent.Under.6, "<br>",
+                "<strong>Number of HPD lead litigations: </strong>", under_six_shp_short$`count.x`, "<br>",
+                "<strong>Lead litigations per thousand buildings: </strong>", 
+                round(under_six_shp_short$lit_per_thous_bbl,2), "<br>"),
+              group="Per thousand buildings") %>%
+  
+  addLegend("topleft", pal = child_pal, values = unique(under_six_shp_short$`Percent.Under.6`),
+            title = "Percent of Population <6 Years Old", opacity = 1, position = "topleft", group="Children") %>%
+  
+  addLegend("topleft", pal = per_thousnd_pal, values = unique(under_six_shp_short$lit_per_thous_bbl),
+            title = "Litigations per Thousand Buildings: 2006-Present", opacity = 1, position = "topleft", group="Per thousand buildings") %>%
+  
+  addLayersControl(
+    # baseGroups = c("Num"),
+    overlayGroups = c("Per thousand buildings"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+```{r}
+# ---- MAP 4 ----
+# ---- save map
+saveWidget(age_thousand_map, file=file.path('../visuals/april_2023',"age_num_per_thousand_by_cd.html"))
+mapshot(age_thousand_map, file = "../visuals/april_2023/age_num_per_thousand_by_cd.png")
+```
+
+---- IGNORE ----
+```{r}
+# ---- set up color palettes for mapping
+# pal = colorBin(
+#   palette = rev(nycc_pal("cool")(100)),
+#   domain = lead_over_all_lits_cd$prop_lead, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+# pal2 = colorBin(
+#   palette = rev(nycc_pal("warm")(100)),
+#   domain = lead_lit_cd_sums$count, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+```
+```{r}
+# # ---- MAP 1 ----
+# # ---- % lead litigations of all HPD litigations
+# prop_of_lits <- leaflet() %>%
+#   addCouncilStyle(add_dists = TRUE) %>%
+#   addPolygons(data=lead_over_all_lits_cd, weight=1, col=~pal(prop_lead), fillOpacity = .7,
+#               popup = paste0("<strong>Percentage lead-related (of all litigations): </strong>", 
+#                              round(lead_over_all_lits_cd$prop_lead*100,2),"%", "<br>"))%>%
+#   addLegend("topleft", pal=pal, values=unique(lead_over_all_lits_cd$prop_lead), title="Lead Litigations", opacity = 1, position = "topleft")
+# # ---- save map 1
+# saveWidget(prop_of_lits, file=file.path('visuals/april_2023', 
+#                                "pct_lead_of_all_lits_by_cd.html"))
+# mapshot(prop_of_lits, file = "visuals/april_2023/pct_lead_of_all_lits_by_cd.png")
+```
+```{r}
+# # ---- MAP 2 ----
+# # ---- base layer: number of lead litigations
+# # ---- overlay: % lead litigations of all HPD litigations
+# num_and_pct_lits <- leaflet() %>%
+#   addCouncilStyle(add_dists = TRUE) %>%
+#   addPolygons(data=lead_lit_cd_sums, weight=1, col=~pal2(count), fillOpacity = .6,
+#               popup = paste0("<strong>Number of HPD lead litigations: </strong>", 
+#                              lead_lit_cd_sums$count, "<br>"), 
+#               group="Num") %>%
+#   addPolygons(data=lead_over_all_lits_cd, weight=1, col=~pal(prop_lead), fillOpacity = .55,
+#               popup = paste0("<strong>Percent of total HPD litigations: </strong>", 
+#                              round(lead_over_all_lits_cd$prop_lead*100,2),"%", "<br>", 
+#                              "<strong>Number of lead litigations: </strong>", lead_over_all_lits_cd$`count.y`, "<br>"),
+#               group="Percent of HPD Total") %>%
+#   addLegend("topleft", pal = pal2, values = unique(lead_lit_cd_sums$count), 
+#             title = "Number of Litigations: 2006-Present", opacity = 1, position = "topleft", group="Num") %>%
+#   addLegend("topleft", pal = pal, values = unique(lead_over_all_lits_cd$prop_lead), 
+#             title = "Percent of HPD Total: 2006-Present", opacity = 1, position = "topleft", group="Percent of HPD Total") %>%
+#   addLayersControl(
+#     # baseGroups = c("Num"),
+#     overlayGroups = c("Percent of HPD Total"),
+#     options = layersControlOptions(collapsed = FALSE)
+#   ) 
+# # ---- save map 1
+# saveWidget(num_and_pct_lits, file=file.path('visuals/april_2023', 
+#                                "pct_lits_layered_over_num_lits_by_cd.html"))
+# mapshot(num_and_pct_lits, file = "visuals/april_2023/pct_lits_layered_over_num_lits_by_cd.png")
+# ```
+# 
+# 
+# ```{r}
+# setwd("/Users/rhirota/Documents/GitHub/lead_hearing")
+# under_six_df <- read.csv('data/input/council-estimates_under-6.csv')
+# # make geometry column a list to convert into spatial
+# under_six_df$geometry <- as.list(under_six_df$geometry)
+# # make into a spatial object
+# under_six_shp <- under_six_df %>% st_as_sf()  
+# st_crs(under_six_shp) <- 4326
+# ```
+# 
+# ```{r}
+# under_six_shp
+# ```
+# 
+# 
+# ```{r}
+# master <- left_join(lead_over_all_lits_cd, under_six_shp %>% as.data.frame() %>% select(-geometry), by = "council_district")
+# ```
+# 
+# ```{r}
+# master$pct_lead <- master$prop_lead*100
+# ```
+# 
+# 
+# ```{r}
+# child_pal = colorBin(
+#   palette = rev(nycc_pal("warm")(100)),
+#   domain =  master$`Percent.Under.6`, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+# prop_pal = colorBin(
+#   palette = rev(nycc_pal("cool")(100)),
+#   domain = master$prop_lead, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+# pct_pal = colorBin(
+#   palette = rev(nycc_pal("cool")(100)),
+#   domain = master$pct_lead, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+# num_pal = colorBin(
+#   palette = rev(nycc_pal("cool")(100)),
+#   domain = master$`count.y`, 
+#   na.color = "White", 
+#   reverse = FALSE
+# )
+# ```
+# 
+# ```{r}
+# three_layer <- leaflet() %>%
+#   addCouncilStyle(add_dists = TRUE) %>%
+#   addPolygons(data=master, weight=1, col=~child_pal(`Percent.Under.6`), fillOpacity = .6,
+#               popup = paste0("<strong>Percent of Population under 6 (years): </strong>", 
+#                              master$`Percent.Under.6`, "%","<br>",
+#                              "<strong>Percent of total HPD litigations: </strong>", 
+#                              round(master$pct_lead,2),"%", "<br>", 
+#                              "<strong>Number of HPD lead litigations: </strong>", 
+#                              master$`count.y`, "<br>"), 
+#               group="Base") %>%
+# 
+# 
+#   # addPolygons(data=master, weight=1, col=~num_pal(`count.y`), fillOpacity = .35,
+#   #             popup = paste0("<strong>Percent of Population under 6 (years): </strong>", 
+#   #                            master$`Percent.Under.6`, "%","<br>",
+#   #                            "<strong>Percent of total HPD litigations: </strong>", 
+#   #                            round(master$prop_lead*100,2),"%", "<br>", 
+#   #                            "<strong>Number of HPD lead litigations: </strong>", 
+#   #                            master$`count.y`, "<br>"), 
+#   #             group="Number of Litigations") %>%
+#   
+#   addPolygons(data=master, weight=1, col=~pct_pal(pct_lead), fillOpacity = .55,
+#               popup = paste0("<strong>Percent of Population under 6 (years): </strong>", 
+#                              master$`Percent.Under.6`, "%","<br>",
+#                              "<strong>Percent of total HPD litigations: </strong>", 
+#                              round(master$pct_lead,2),"%", "<br>", 
+#                              "<strong>Number of HPD lead litigations: </strong>", 
+#                              master$`count.y`, "<br>"), 
+#               group="Percent of HPD Total") %>%
+#   
+#   addLegend("topleft", pal = child_pal, values = paste0(unique(master$`Percent.Under.6`),"%"), 
+#             title = "Percent of Population <6 Years Old", opacity = 1, 
+#             position = "topleft", group="Base") %>%
+#   
+#   addLegend("topleft", pal = pct_pal, values = unique(master$pct_lead), 
+#             title = "Percent of HPD Total: 2006-Present", opacity = 1, position = "topleft", 
+#             group="Percent of HPD Total") %>%
+#   
+#    # addLegend("topleft", pal = num_pal, values = unique(master$`count.y`), 
+#    #          title = "Number of Litigations: 2006-Present", opacity = 1, position = "topleft", 
+#    #          group="Number of Litigations") %>%
+#   
+#   addLayersControl(
+#     # baseGroups = c("Num"),
+#     overlayGroups = c("Percent of HPD Total"),
+#     options = layersControlOptions(collapsed = FALSE)
+#   ) 
+```
+```{r}
+# saveWidget(three_layer, file=file.path('visuals/april_2023', 
+#                                "num_pct_agebase_by_cd.html"))
+# mapshot(three_layer, file = "visuals/april_2023/num_pct_agebase_by_cd.png")
+```
+---- IGNORE ----
